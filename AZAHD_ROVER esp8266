@@ -1,0 +1,30 @@
+#include <ESP8266WiFi.h>
+
+const char* ssid = "Kumaran King";  // Replace with your WiFi network name
+const char* password = "momdad7788"; // Replace with your WiFi password
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+
+  Serial.print("Connecting to WiFi");
+  unsigned long startTime = millis();
+  
+  // Loop until connected or timeout after 15 seconds
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    // Check for timeout
+    if (millis() - startTime >= 15000) {
+      Serial.println("\nFailed to connect to WiFi. Restarting...");
+      ESP.restart();  // Restart ESP8266 if it fails to connect within the timeout
+    }
+  }
+  Serial.println("\nConnected to WiFi");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void loop() {
+  // Your loop code here
+}
