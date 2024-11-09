@@ -1,0 +1,111 @@
+#define motor1 14
+#define motor2 15
+#define motor3 16
+#define motor4 17
+
+#define ECHOpin 9
+#define TRIGpin 8
+#define Gas_SENSOR A1
+int ldrPin = A0;
+int ldrStatus;
+int wled1 = 4;
+int wled2 = 5;
+int wled3 = 13;
+int yled = 12;
+int rled = 11;
+long duration;
+long distance;
+int pir = 3;
+int haspir = 0;
+
+void setup()
+{
+  pinMode(motor1, OUTPUT);
+  pinMode(motor2, OUTPUT);
+  pinMode(motor3, OUTPUT);
+  pinMode(motor4, OUTPUT);
+  pinMode(TRIGpin, OUTPUT);
+  pinMode(pir, INPUT);
+  pinMode(rled, OUTPUT);
+  pinMode(yled, OUTPUT);
+  pinMode(wled1, OUTPUT);
+  pinMode(wled2, OUTPUT);
+  pinMode(wled3, OUTPUT);
+  pinMode(ECHOpin, INPUT);
+  Serial.begin(9600);      // For Arduino Serial Monitor
+  Serial1.begin(115200);   // For ESP8266 communication
+}
+
+void backward()
+{
+  digitalWrite(motor1, 1);
+  digitalWrite(motor3, 1);
+  digitalWrite(motor2, 0);
+  digitalWrite(motor4, 0);
+}
+
+void forward()
+{
+  digitalWrite(motor1, 0);
+  digitalWrite(motor3, 0);
+  digitalWrite(motor2, 1);
+  digitalWrite(motor4, 1);
+}
+
+void loop()
+{
+  float solarVoltage = readSolarVoltage();
+
+  // Check if voltage is above threshold to run the motor
+  if (solarVoltage >= voltageThreshold) {
+    runMotor();
+    Serial.println("Car is running...");
+  } else {
+    stopMotor();
+    Serial.println("Insufficient power, car is stopped.");
+  }
+
+  delay(1000);
+  forward();
+  ldrStatus = analogRead(ldrPin);
+
+  if (ldrStatus <= 4) 
+  {
+    digitalWrite(wled1, 1);
+    digitalWrite(wled2, 1);
+    digitalWrite(wled3, 1);
+  }
+  else
+  {
+    digitalWrite(wled1, 0);
+    digitalWrite(wled2, 0);
+    digitalWrite(wled3, 0);
+  }
+  
+  digitalWrite(TRIGpin, 0);
+  delayMicroseconds(4);
+  digitalWrite(TRIGpin, 1);
+  delayMicroseconds(15);
+  digitalWrite(TRIGpin, 0);
+  duration = pulseIn(ECHOpin, 1);
+  distance = duration * (0.034 / 2);
+
+  int gasValue = analogRead(Gas_SENSOR);
+  haspir = digitalRead(pir);
+
+  // Format data as a single line of text
+  String data = "LDR:" + String(ldrStatus) + ", Distance:" + String(distance) +
+                ", Gas:" + String(gasValue) + ", PIR:" + String(haspir);
+  
+  // Send data to ESP8266
+  Serial1.println(data);
+
+  delay(1000);  // Adjust delay as needed
+  backward();
+  delay(1000);
+}
+
+float readSolarVoltage() {
+  // Simulated solar voltage reading (replace with actual sensor reading)
+  return analogRead(A2) * (5.0 / 1023.0) * 2; // Assuming a voltage divider setup
+}
